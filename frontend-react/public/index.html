@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WMS Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #080c14;
+      --bg2:      #0d1422;
+      --bg3:      #111827;
+      --card:     #0f1a2e;
+      --border:   #1e2d45;
+      --green:    #00e5a0;
+      --blue:     #3b9eff;
+      --red:      #ff4757;
+      --amber:    #ffb627;
+      --purple:   #a78bfa;
+      --gray:     #4a5568;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,12,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--green), #00b37a);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.2);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .backend-url {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .backend-url input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      width: 200px;
+      outline: none;
+    }
+
+    .backend-url input:focus { border-color: var(--green); }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #000;
+    }
+    .btn-green:hover { background: #00c98a; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+    .btn-red {
+      background: rgba(255,71,87,0.15);
+      border: 1px solid rgba(255,71,87,0.3);
+      color: var(--red);
+    }
+    .btn-red:hover { background: rgba(255,71,87,0.25); }
+
+    /* ── NAV TABS ── */
+    nav {
+      display: flex;
+      gap: 2px;
+      padding: 12px 28px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .tab {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 8px 18px 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    .tab-badge {
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 10px;
+      min-width: 16px;
+      text-align: center;
+    }
+
+    /* ── MAIN ── */
+    main {
+      padding: 24px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      border-radius: 10px 0 0 10px;
+    }
+
+    .stat-card.green::after  { background: var(--green); }
+    .stat-card.blue::after   { background: var(--blue); }
+    .stat-card.red::after    { background: var(--red); }
+    .stat-card.amber::after  { background: var(--amber); }
+    .stat-card.purple::after { background: var(--purple); }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-card.green  .stat-value { color: var(--green); }
+    .stat-card.blue   .stat-value { color: var(--blue); }
+    .stat-card.red    .stat-value { color: var(--red); }
+    .stat-card.amber  .stat-value { color: var(--amber); }
+    .stat-card.purple .stat-value { color: var(--purple); }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover, .filter-btn.active { border-color: var(--green); color: var(--green); background: rgba(0,229,160,0.06); }
+
+    select.filter-btn {
+      -webkit-appearance: none;
+      padding-right: 24px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    /* ── NODE GRID ── */
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .node-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .node-card:hover { transform: translateY(-2px); }
+
+    .node-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .node-card.ONLINE::before    { background: var(--green); }
+    .node-card.IDLE::before      { background: var(--blue); }
+    .node-card.OVERLOADED::before{ background: var(--red); animation: blink 1s infinite; }
+    .node-card.OFFLINE::before   { background: var(--gray); }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .node-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .node-id {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .node-status-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-ONLINE    { background: rgba(0,229,160,0.15);  color: var(--green);  border: 1px solid rgba(0,229,160,0.3); }
+    .badge-IDLE      { background: rgba(59,158,255,0.15); color: var(--blue);   border: 1px solid rgba(59,158,255,0.3); }
+    .badge-OVERLOADED{ background: rgba(255,71,87,0.15);  color: var(--red);    border: 1px solid rgba(255,71,87,0.3); }
+    .badge-OFFLINE   { background: rgba(74,85,104,0.2);   color: var(--gray);   border: 1px solid rgba(74,85,104,0.3); }
+
+    .node-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .node-row-label { color: var(--muted); }
+    .node-row-value { color: var(--text); font-weight: 500; }
+
+    .presence-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .presence-dot.present { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .presence-dot.absent  { background: var(--red); }
+
+    /* CPU/RAM bars */
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .bar-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .bar-fill.cpu  { background: linear-gradient(90deg, var(--blue), #7dd3fc); }
+    .bar-fill.ram  { background: linear-gradient(90deg, var(--purple), #c4b5fd); }
+    .bar-fill.high { background: linear-gradient(90deg, var(--red), #ff8fa3); }
+
+    .activity-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .chip-WORKING  { background: rgba(0,229,160,0.1);  color: var(--green); }
+    .chip-PHONE    { background: rgba(255,182,39,0.1); color: var(--amber); }
+    .chip-SLEEPING { background: rgba(167,139,250,0.1);color: var(--purple); }
+    .chip-AWAY     { background: rgba(74,85,104,0.15); color: var(--gray); }
+
+    .node-footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .node-tasks {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .node-updated {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ── ALERTS PAGE ── */
+    .alerts-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .alerts-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .alerts-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .alerts-table th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 12px 16px;
+      text-align: left;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .alerts-table td {
+      font-size: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(30,45,69,0.5);
+      vertical-align: middle;
+    }
+
+    .alerts-table tr:last-child td { border-bottom: none; }
+    .alerts-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .alert-type-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .alert-PHONE    { background: rgba(255,182,39,0.15);  color: var(--amber);  border: 1px solid rgba(255,182,39,0.3); }
+    .alert-SLEEPING { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+    .alert-AWAY     { background: rgba(74,85,104,0.2);    color: var(--gray);   border: 1px solid rgba(74,85,104,0.3); }
+
+    .warning-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .w-sent   { background: rgba(0,229,160,0.1);  color: var(--green); }
+    .w-unsent { background: rgba(74,85,104,0.1);  color: var(--muted); }
+
+    /* ── TASKS PAGE ── */
+    .tasks-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .tasks-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tasks-table th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 12px 16px;
+      text-align: left;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tasks-table td {
+      font-size: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(30,45,69,0.5);
+    }
+
+    .tasks-table tr:last-child td { border-bottom: none; }
+    .tasks-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .task-status {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .ts-TRANSFERRED { background: rgba(0,229,160,0.1);  color: var(--green);  border: 1px solid rgba(0,229,160,0.2); }
+    .ts-PENDING     { background: rgba(255,182,39,0.1); color: var(--amber);  border: 1px solid rgba(255,182,39,0.2); }
+    .ts-RUNNING     { background: rgba(59,158,255,0.1); color: var(--blue);   border: 1px solid rgba(59,158,255,0.2); }
+    .ts-COMPLETED   { background: rgba(74,85,104,0.15); color: var(--gray);   border: 1px solid rgba(74,85,104,0.3); }
+
+    .transfer-arrow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .node-tag {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ── SEND ALERT MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 420px;
+      max-width: 90vw;
+    }
+
+    .modal h3 {
+      font-family: var(--font-head);
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    .form-input:focus, .form-select:focus { border-color: var(--green); }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    /* ── SYSTEM INFO PAGE ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .info-card h4 {
+      font-family: var(--font-head);
+      font-size: 14px;
+      margin-bottom: 14px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-row-label { color: var(--muted); }
+    .info-row-value { color: var(--text); font-weight: 500; }
+
+    .api-endpoint {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .method-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .method-GET  { background: rgba(0,229,160,0.2); color: var(--green); }
+    .method-POST { background: rgba(255,182,39,0.2); color: var(--amber); }
+
+    .api-path { font-size: 11px; color: var(--text); }
+    .api-desc { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 12px;
+      z-index: 300;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      max-width: 320px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #toast.success { border-color: rgba(0,229,160,0.4); color: var(--green); }
+    #toast.error   { border-color: rgba(255,71,87,0.4); color: var(--red); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; margin-top: 6px; }
+
+    /* ── REFRESH SPINNER ── */
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SEARCH ── */
+    .search-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      outline: none;
+      width: 180px;
+    }
+
+    .search-input:focus { border-color: var(--green); }
+
+    /* ── AUTO REFRESH INDICATOR ── */
+    .refresh-bar {
+      height: 2px;
+      background: var(--border);
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      z-index: 99;
+    }
+
+    .refresh-progress {
+      height: 100%;
+      background: var(--green);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* responsive */
+    @media (max-width: 640px) {
+      header { padding: 0 14px; }
+      main   { padding: 14px; }
+      nav    { padding: 10px 14px 0; overflow-x: auto; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .backend-url { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Refresh progress bar -->
+<div class="refresh-bar"><div class="refresh-progress" id="refreshBar"></div></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🖥</div>
+    WMS
+  </div>
+
+  <div class="header-right">
+    <div class="backend-url">
+      <span>Backend:</span>
+      <input type="text" id="backendUrl" value="http://localhost:8080" placeholder="http://localhost:8080" />
+      <button class="btn btn-outline" onclick="applyBackendUrl()">Apply</button>
+    </div>
+    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <button class="btn btn-outline" id="refreshBtn" onclick="fetchAll()">↻ Refresh</button>
+  </div>
+</header>
+
+<!-- ── NAV ── -->
+<nav>
+  <button class="tab active" data-tab="nodes" onclick="switchTab('nodes')">📡 Nodes</button>
+  <button class="tab" data-tab="alerts" onclick="switchTab('alerts')">
+    🚨 Alerts <span class="tab-badge" id="alertBadge">0</span>
+  </button>
+  <button class="tab" data-tab="tasks" onclick="switchTab('tasks')">📦 Tasks</button>
+  <button class="tab" data-tab="api" onclick="switchTab('api')">⚙ System Info</button>
+</nav>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- ═══ NODES PAGE ═══ -->
+  <div class="page active" id="page-nodes">
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat-card green">
+        <div class="stat-label">Online</div>
+        <div class="stat-value" id="stat-online">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Overloaded</div>
+        <div class="stat-value" id="stat-overloaded">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Idle</div>
+        <div class="stat-value" id="stat-idle">0</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Working</div>
+        <div class="stat-value" id="stat-working">0</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Total Nodes</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="toolbar-label">Filter:</span>
+      <button class="filter-btn active" onclick="setFilter('ALL', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('ONLINE', this)">Online</button>
+      <button class="filter-btn" onclick="setFilter('OVERLOADED', this)">Overloaded</button>
+      <button class="filter-btn" onclick="setFilter('IDLE', this)">Idle</button>
+      <button class="filter-btn" onclick="setFilter('OFFLINE', this)">Offline</button>
+      <div style="flex:1"></div>
+      <input class="search-input" id="nodeSearch" placeholder="Search nodes…" oninput="renderNodes()">
+      <select class="filter-btn" id="sortSelect" onchange="renderNodes()">
+        <option value="name">Sort: Name</option>
+        <option value="cpu">Sort: CPU ↓</option>
+        <option value="ram">Sort: RAM ↓</option>
+        <option value="status">Sort: Status</option>
+      </select>
+    </div>
+
+    <!-- Node grid -->
+    <div class="node-grid" id="nodeGrid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">📡</div>
+        <strong>Waiting for nodes…</strong>
+        <p>Start the Python agent or send test data to see nodes here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALERTS PAGE ═══ -->
+  <div class="page" id="page-alerts">
+
+    <div class="alerts-toolbar">
+      <input class="search-input" id="alertSearch" placeholder="Search alerts…" oninput="renderAlerts()">
+      <select class="filter-btn" id="alertTypeFilter" onchange="renderAlerts()">
+        <option value="ALL">All types</option>
+        <option value="PHONE">Phone</option>
+        <option value="SLEEPING">Sleeping</option>
+        <option value="AWAY">Away</option>
+      </select>
+      <div style="flex:1"></div>
+      <button class="btn btn-green" onclick="openSendAlert()">+ Send Alert</button>
+    </div>
+
+    <div class="alerts-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Employee</th>
+            <th>Node</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Warning Sent</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="alertsBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="icon">🔔</div><p>No alerts yet.</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TASKS PAGE ═══ -->
+  <div class="page" id="page-tasks">
+
+    <div class="toolbar">
+      <input class="search-input" id="taskSearch" placeholder="Search tasks…" oninput="renderTasks()">
+      <select class="filter-btn" id="taskStatusFilter" onchange="renderTasks()">
+        <option value="ALL">All statuses</option>
+        <option value="TRANSFERRED">Transferred</option>
+        <option value="PENDING">Pending</option>
+        <option value="RUNNING">Running</option>
+        <option value="COMPLETED">Completed</option>
+      </select>
+    </div>
+
+    <div class="tasks-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Task Name</th>
+            <th>Transfer Route</th>
+            <th>Status</th>
+            <th>CPU Req</th>
+            <th>RAM Req</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="tasksBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="icon">📦</div><p>No task transfers yet. Workload analyzer triggers these automatically when a node is overloaded.</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SYSTEM INFO PAGE ═══ -->
+  <div class="page" id="page-api">
+    <div class="info-grid">
+
+      <div class="info-card">
+        <h4>🖥 System Status</h4>
+        <div class="info-row"><span class="info-row-label">Backend</span><span class="info-row-value" id="info-backend">Checking…</span></div>
+        <div class="info-row"><span class="info-row-label">Backend URL</span><span class="info-row-value" id="info-url">—</span></div>
+        <div class="info-row"><span class="info-row-label">Auto-refresh</span><span class="info-row-value">Every 5 seconds</span></div>
+        <div class="info-row"><span class="info-row-label">Total nodes</span><span class="info-row-value" id="info-nodes">0</span></div>
+        <div class="info-row"><span class="info-row-label">Total alerts</span><span class="info-row-value" id="info-alerts">0</span></div>
+        <div class="info-row"><span class="info-row-label">Total tasks</span><span class="info-row-value" id="info-tasks">0</span></div>
+        <div class="info-row"><span class="info-row-label">Last fetch</span><span class="info-row-value" id="info-lastfetch">—</span></div>
+      </div>
+
+      <div class="info-card">
+        <h4>🔌 API Endpoints</h4>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/api/nodes</span>
+          <span class="api-desc">All nodes</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-POST">POST</span>
+          <span class="api-path">/api/nodes/heartbeat</span>
+          <span class="api-desc">Agent heartbeat</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/api/nodes/{id}</span>
+          <span class="api-desc">Single node</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/api/monitoring/activities</span>
+          <span class="api-desc">All alerts</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-POST">POST</span>
+          <span class="api-path">/api/monitoring/activity</span>
+          <span class="api-desc">Report activity</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/api/tasks</span>
+          <span class="api-desc">All tasks</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/api/test</span>
+          <span class="api-desc">Health check</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method-badge method-GET">GET</span>
+          <span class="api-path">/h2-console</span>
+          <span class="api-desc">Database console</span>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-green" style="width:100%" onclick="testBackend()">Test Backend Connection</button>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>🤖 AI Monitoring Logic</h4>
+        <div class="info-row"><span class="info-row-label">Heartbeat interval</span><span class="info-row-value">5 seconds</span></div>
+        <div class="info-row"><span class="info-row-label">Alert trigger</span><span class="info-row-value">3 consecutive detections</span></div>
+        <div class="info-row"><span class="info-row-label">Overload threshold</span><span class="info-row-value">CPU or RAM > 80%</span></div>
+        <div class="info-row"><span class="info-row-label">Idle threshold</span><span class="info-row-value">CPU < 30%</span></div>
+        <div class="info-row"><span class="info-row-label">Transfer target CPU</span><span class="info-row-value">< 50%</span></div>
+        <div class="info-row"><span class="info-row-label">Transfer target RAM</span><span class="info-row-value">> 2 GB free</span></div>
+        <div class="info-row"><span class="info-row-label">Analyzer runs every</span><span class="info-row-value">10 seconds</span></div>
+        <div class="info-row"><span class="info-row-label">Detection models</span><span class="info-row-value">YOLOv8 + MediaPipe</span></div>
+      </div>
+
+      <div class="info-card">
+        <h4>📊 Quick Actions</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+          <button class="btn btn-outline" style="text-align:left;padding:12px 14px" onclick="window.open(getBackend()+'/h2-console','_blank')">
+            🗄 Open H2 Database Console
+          </button>
+          <button class="btn btn-outline" style="text-align:left;padding:12px 14px" onclick="window.open(getBackend()+'/api/nodes','_blank')">
+            📡 View Nodes JSON (raw)
+          </button>
+          <button class="btn btn-outline" style="text-align:left;padding:12px 14px" onclick="window.open(getBackend()+'/api/monitoring/activities','_blank')">
+            🚨 View Alerts JSON (raw)
+          </button>
+          <button class="btn btn-outline" style="text-align:left;padding:12px 14px" onclick="window.open(getBackend()+'/api/tasks','_blank')">
+            📦 View Tasks JSON (raw)
+          </button>
+          <button class="btn btn-outline" style="text-align:left;padding:12px 14px" onclick="sendTestData()">
+            🧪 Send Test Data (3 nodes + alert)
+          </button>
+          <button class="btn btn-red" style="text-align:left;padding:12px 14px" onclick="openSendAlert()">
+            + Manually Send Alert
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ── SEND ALERT MODAL ── -->
+<div class="modal-overlay" id="alertModal">
+  <div class="modal">
+    <h3>🚨 Send Alert</h3>
+    <div class="form-group">
+      <label class="form-label">Node ID</label>
+      <input class="form-input" id="modal-nodeId" placeholder="e.g. PC-JOHN-002" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Employee Name</label>
+      <input class="form-input" id="modal-employee" placeholder="e.g. John" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Activity Type</label>
+      <select class="form-select" id="modal-type">
+        <option value="PHONE">PHONE</option>
+        <option value="SLEEPING">SLEEPING</option>
+        <option value="AWAY">AWAY</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="modal-desc" placeholder="e.g. Employee using mobile phone" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="submitAlert()">Send Alert</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<script>
+  let BACKEND = 'http://localhost:8080';
+  let allNodes = [], allAlerts = [], allTasks = [];
+  let currentFilter = 'ALL';
+  let refreshTimer = null;
+  let progressTimer = null;
+  let progressStart = null;
+  const REFRESH_MS = 5000;
+
+  const getBackend = () => BACKEND;
+
+  function applyBackendUrl() {
+    BACKEND = document.getElementById('backendUrl').value.replace(/\/$/, '');
+    document.getElementById('info-url').textContent = BACKEND;
+    fetchAll();
+    toast('Backend URL updated', 'success');
+  }
+
+  /* ── DATA FETCHING ── */
+  async function fetchAll() {
+    const btn = document.getElementById('refreshBtn');
+    btn.innerHTML = '<span class="spin">↻</span> Refresh';
+    try {
+      const [n, a, t] = await Promise.all([
+        fetch(`${BACKEND}/api/nodes`).then(r => r.json()),
+        fetch(`${BACKEND}/api/monitoring/activities`).then(r => r.json()),
+        fetch(`${BACKEND}/api/tasks`).then(r => r.json()),
+      ]);
+      allNodes  = n;
+      allAlerts = a;
+      allTasks  = t;
+      document.getElementById('info-backend').textContent = '✅ Connected';
+      document.getElementById('info-backend').style.color = 'var(--green)';
+    } catch(e) {
+      document.getElementById('info-backend').textContent = '❌ Offline';
+      document.getElementById('info-backend').style.color = 'var(--red)';
+    }
+    document.getElementById('info-lastfetch').textContent = new Date().toLocaleTimeString();
+    document.getElementById('info-nodes').textContent  = allNodes.length;
+    document.getElementById('info-alerts').textContent = allAlerts.length;
+    document.getElementById('info-tasks').textContent  = allTasks.length;
+    updateStats();
+    renderNodes();
+    renderAlerts();
+    renderTasks();
+    btn.innerHTML = '↻ Refresh';
+    resetProgress();
+  }
+
+  /* ── STATS ── */
+  function updateStats() {
+    const c = { ONLINE:0, OVERLOADED:0, IDLE:0, OFFLINE:0 };
+    allNodes.forEach(n => c[n.status] = (c[n.status]||0)+1);
+    document.getElementById('stat-online').textContent     = c.ONLINE||0;
+    document.getElementById('stat-overloaded').textContent = c.OVERLOADED||0;
+    document.getElementById('stat-idle').textContent       = c.IDLE||0;
+    document.getElementById('stat-working').textContent    = allNodes.filter(n=>n.currentActivity==='WORKING').length;
+    document.getElementById('stat-total').textContent      = allNodes.length;
+    document.getElementById('alertBadge').textContent      = allAlerts.length;
+  }
+
+  /* ── NODES ── */
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderNodes();
+  }
+
+  function renderNodes() {
+    const search = (document.getElementById('nodeSearch').value||'').toLowerCase();
+    const sort   = document.getElementById('sortSelect').value;
+
+    let nodes = allNodes.filter(n => {
+      if (currentFilter !== 'ALL' && n.status !== currentFilter) return false;
+      if (search && !n.nodeId.toLowerCase().includes(search) && !n.employeeName.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    if (sort==='cpu')    nodes.sort((a,b)=>b.cpuUsage-a.cpuUsage);
+    if (sort==='ram')    nodes.sort((a,b)=>b.memoryUsage-a.memoryUsage);
+    if (sort==='status') nodes.sort((a,b)=>a.status.localeCompare(b.status));
+    if (sort==='name')   nodes.sort((a,b)=>a.nodeId.localeCompare(b.nodeId));
+
+    const grid = document.getElementById('nodeGrid');
+    if (nodes.length===0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">📡</div><strong>No nodes match</strong><p>Try a different filter or start the Python agent.</p></div>`;
+      return;
+    }
+
+    const actIcon = { WORKING:'💼', PHONE:'📱', SLEEPING:'😴', AWAY:'🚶', DISTRACTED:'⚠️' };
+
+    grid.innerHTML = nodes.map(n => {
+      const cpu = n.cpuUsage||0, ram = n.memoryUsage||0;
+      const cpuHigh = cpu>80, ramHigh = ram>80;
+      const updated = n.lastUpdated ? new Date(n.lastUpdated).toLocaleTimeString() : '—';
+      return `
+      <div class="node-card ${n.status||'OFFLINE'}">
+        <div class="node-header">
+          <div class="node-id">${n.nodeId}</div>
+          <span class="node-status-badge badge-${n.status||'OFFLINE'}">${n.status||'OFFLINE'}</span>
+        </div>
+        <div class="node-row">
+          <span class="node-row-label">Employee</span>
+          <span class="node-row-value">
+            <span class="presence-dot ${n.employeePresent?'present':'absent'}"></span>
+            ${n.employeeName||'—'} · ${n.employeePresent?'Present':'Absent'}
+          </span>
+        </div>
+        <div class="node-row">
+          <span class="node-row-label">Activity</span>
+          <span><span class="activity-chip chip-${n.currentActivity||'AWAY'}">${actIcon[n.currentActivity]||'•'} ${n.currentActivity||'AWAY'}</span></span>
+        </div>
+        <div class="node-row">
+          <span class="node-row-label">IP Address</span>
+          <span class="node-row-value">${n.ipAddress||'—'}</span>
+        </div>
+        <div style="margin-top:10px">
+          <div class="bar-label"><span>CPU</span><span>${cpu.toFixed(1)}%</span></div>
+          <div class="bar-track"><div class="bar-fill ${cpuHigh?'high':'cpu'}" style="width:${Math.min(cpu,100)}%"></div></div>
+          <div class="bar-label"><span>RAM</span><span>${ram.toFixed(1)}%</span></div>
+          <div class="bar-track"><div class="bar-fill ${ramHigh?'high':'ram'}" style="width:${Math.min(ram,100)}%"></div></div>
+        </div>
+        <div class="node-footer">
+          <span class="node-tasks">📦 ${n.activeTasks||0} tasks · 💾 ${(n.availableMemoryGB||0).toFixed(1)} GB free</span>
+          <span class="node-updated">⟳ ${updated}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ── ALERTS ── */
+  function renderAlerts() {
+    const search = (document.getElementById('alertSearch').value||'').toLowerCase();
+    const type   = document.getElementById('alertTypeFilter').value;
+    let alerts = [...allAlerts].reverse().filter(a => {
+      if (type!=='ALL' && a.activityType!==type) return false;
+      if (search && !a.employeeName.toLowerCase().includes(search) && !(a.description||'').toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    const body = document.getElementById('alertsBody');
+    if (alerts.length===0) {
+      body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">🔔</div><p>No alerts match.</p></div></td></tr>`;
+      return;
+    }
+
+    body.innerHTML = alerts.map((a,i) => `
+      <tr>
+        <td style="color:var(--muted)">${a.id||i+1}</td>
+        <td style="font-weight:500">${a.employeeName||'—'}</td>
+        <td><span class="node-tag">${a.nodeId||'—'}</span></td>
+        <td><span class="alert-type-badge alert-${a.activityType}">${a.activityType||'—'}</span></td>
+        <td style="color:var(--muted)">${a.description||'—'}</td>
+        <td><span class="warning-badge ${a.warningSent?'w-sent':'w-unsent'}">${a.warningSent?'✓ Sent':'Pending'}</span></td>
+        <td style="color:var(--muted);font-size:11px">${a.timestamp ? new Date(a.timestamp).toLocaleString() : '—'}</td>
+      </tr>`).join('');
+  }
+
+  /* ── TASKS ── */
+  function renderTasks() {
+    const search = (document.getElementById('taskSearch').value||'').toLowerCase();
+    const status = document.getElementById('taskStatusFilter').value;
+    let tasks = [...allTasks].reverse().filter(t => {
+      if (status!=='ALL' && t.status!==status) return false;
+      if (search && !(t.taskName||'').toLowerCase().includes(search) && !(t.assignedNodeId||'').toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    const body = document.getElementById('tasksBody');
+    if (tasks.length===0) {
+      body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📦</div><p>No task transfers yet.</p></div></td></tr>`;
+      return;
+    }
+
+    body.innerHTML = tasks.map(t => `
+      <tr>
+        <td style="color:var(--muted)">${t.id||'—'}</td>
+        <td style="font-weight:500">${t.taskName||'—'}</td>
+        <td>
+          <div class="transfer-arrow">
+            <span class="node-tag">${t.originNodeId||'?'}</span>
+            <span style="color:var(--green)">→</span>
+            <span class="node-tag" style="border-color:rgba(0,229,160,0.3)">${t.assignedNodeId||'?'}</span>
+          </div>
+        </td>
+        <td><span class="task-status ts-${t.status}">${t.status||'—'}</span></td>
+        <td style="color:var(--muted)">${(t.requiredCpu||0).toFixed(0)}%</td>
+        <td style="color:var(--muted)">${(t.requiredMemoryGB||0).toFixed(1)} GB</td>
+        <td style="color:var(--muted);font-size:11px">${t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'}</td>
+      </tr>`).join('');
+  }
+
+  /* ── TABS ── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id===`page-${tab}`));
+    document.getElementById('info-url').textContent = BACKEND;
+  }
+
+  /* ── ALERT MODAL ── */
+  function openSendAlert() {
+    document.getElementById('alertModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('alertModal').classList.remove('open');
+  }
+
+  async function submitAlert() {
+    const payload = {
+      nodeId:       document.getElementById('modal-nodeId').value,
+      employeeName: document.getElementById('modal-employee').value,
+      activityType: document.getElementById('modal-type').value,
+      description:  document.getElementById('modal-desc').value || 'Manual alert'
+    };
+    if (!payload.nodeId || !payload.employeeName) { toast('Fill in Node ID and Employee Name', 'error'); return; }
+    try {
+      await fetch(`${BACKEND}/api/monitoring/activity`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      toast('Alert sent successfully!', 'success');
+      closeModal();
+      fetchAll();
+    } catch(e) { toast('Failed to send alert: '+e.message, 'error'); }
+  }
+
+  /* ── TEST DATA ── */
+  async function sendTestData() {
+    const nodes = [
+      { nodeId:'PC-TEST-001', ipAddress:'192.168.1.10', employeeName:'Alice', cpuUsage:45.5, memoryUsage:60.2, availableMemoryGB:8, activeTasks:3, employeePresent:true, employeeActive:true, currentActivity:'WORKING' },
+      { nodeId:'PC-TEST-002', ipAddress:'192.168.1.11', employeeName:'Bob', cpuUsage:88.0, memoryUsage:85.0, availableMemoryGB:1.5, activeTasks:12, employeePresent:true, employeeActive:false, currentActivity:'PHONE' },
+      { nodeId:'PC-TEST-003', ipAddress:'192.168.1.12', employeeName:'Carol', cpuUsage:12.0, memoryUsage:30.0, availableMemoryGB:14, activeTasks:1, employeePresent:false, employeeActive:false, currentActivity:'AWAY' },
+    ];
+    try {
+      for (const n of nodes) {
+        await fetch(`${BACKEND}/api/nodes/heartbeat`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(n) });
+      }
+      await fetch(`${BACKEND}/api/monitoring/activity`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ nodeId:'PC-TEST-002', employeeName:'Bob', activityType:'PHONE', description:'Employee using mobile phone' })
+      });
+      toast('Test data sent! (3 nodes + 1 alert)', 'success');
+      fetchAll();
+    } catch(e) { toast('Failed: is backend running?', 'error'); }
+  }
+
+  /* ── BACKEND TEST ── */
+  async function testBackend() {
+    try {
+      const r = await fetch(`${BACKEND}/api/test`);
+      const t = await r.text();
+      toast('✅ ' + t, 'success');
+    } catch(e) { toast('❌ Backend not reachable', 'error'); }
+  }
+
+  /* ── TOAST ── */
+  let toastTimer;
+  function toast(msg, type='success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.className='', 3000);
+  }
+
+  /* ── PROGRESS BAR ── */
+  function resetProgress() {
+    clearInterval(progressTimer);
+    progressStart = Date.now();
+    progressTimer = setInterval(() => {
+      const pct = Math.min(((Date.now()-progressStart)/REFRESH_MS)*100, 100);
+      document.getElementById('refreshBar').style.width = pct+'%';
+    }, 100);
+  }
+
+  /* ── AUTO REFRESH ── */
+  function startAutoRefresh() {
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(fetchAll, REFRESH_MS);
+  }
+
+  /* ── INIT ── */
+  document.getElementById('info-url').textContent = BACKEND;
+  fetchAll();
+  startAutoRefresh();
+</script>
+</body>
+</html>
+
