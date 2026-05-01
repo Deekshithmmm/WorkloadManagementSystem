@@ -20,7 +20,6 @@ public class TaskTransferService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Agent receiver runs on port 9090 on every machine
     private static final int AGENT_PORT = 9090;
 
     public void transferTask(ComputerNode source, ComputerNode target) {
@@ -34,8 +33,9 @@ public class TaskTransferService {
         task.setTaskName(taskName);
         task.setTaskPayload(taskPayload);
         task.setOriginNodeId(source.getNodeId());
+        task.setOriginIp(source.getIpAddress());        // ← store source IP for agent fetch
         task.setAssignedNodeId(target.getNodeId());
-        task.setStatus("PENDING");           // will be updated after dispatch
+        task.setStatus("PENDING");
         task.setCreatedAt(LocalDateTime.now());
         task.setRequiredCpu(20.0);
         task.setRequiredMemoryGB(1.5);
@@ -76,6 +76,7 @@ public class TaskTransferService {
             body.put("taskName",    task.getTaskName());
             body.put("taskPayload", task.getTaskPayload());
             body.put("originNode",  task.getOriginNodeId());
+            body.put("originIp",    task.getOriginIp());   // ← target uses this to fetch files/state
             body.put("requiredCpu", task.getRequiredCpu());
             body.put("requiredRam", task.getRequiredMemoryGB());
 
@@ -93,22 +94,10 @@ public class TaskTransferService {
         }
     }
 
-    // ── Builds the actual shell command the target agent will run ─────────────
-    // Replace these examples with real commands for your use case
+    // ── Tells the target agent to run the execute_tasks script ────────────────
+    // The script on the target machine is responsible for fetching and
+    // re-launching whatever was running on the source (using originIp).
     private String buildPayload(ComputerNode source) {
-        // Example payloads — pick one or replace with your real task logic:
-
-        // 1. Write a log file confirming receipt
-        return "echo Task received from " + source.getNodeId()
-                + " at %DATE% %TIME% >> C:\\wms_tasks\\task_log.txt";
-
-        // 2. Run a Python processing script
-        // return "python C:\\scripts\\process_data.py --source " + source.getNodeId();
-
-        // 3. Copy files from a shared location
-        // return "xcopy \\\\server\\shared\\pending C:\\local\\work /E /Y";
-
-        // 4. Start a background service
-        // return "net start MyProcessingService";
+        return "python C:\\wms_tasks\\execute_tasks.py";
     }
 }

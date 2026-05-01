@@ -9,11 +9,14 @@ from system_stats import get_system_stats, get_ip
 from presence_detector import detect_employee_presence
 from activity_monitor import analyze_activity
 
-BACKEND_URL = "http://localhost:8080"
-NODE_ID = socket.gethostname() + "-" + str(uuid.uuid4())[:6]
-EMPLOYEE_NAME = "John Doe"  # configurable
+BACKEND_URL  = "http://localhost:8080"
+NODE_ID      = socket.gethostname() + "-" + str(uuid.uuid4())[:6]
+EMPLOYEE_NAME = "Deekshith"          # change per laptop
+PHONE_NUMBER  = "+919380961685"     # change per laptop
+
+
 def start_receiver():
-    receiver_app.run(port=9090, use_reloader=False)
+    receiver_app.run(host='0.0.0.0',port=9090, use_reloader=False)
 
 threading.Thread(target=start_receiver, daemon=True).start()
 print("📡 Task receiver listening on port 9090")
@@ -25,23 +28,24 @@ def send_heartbeat(data):
     except Exception as e:
         print(f"⚠️  Backend unreachable: {e}")
 
+
 def send_activity_alert(activity_type, description):
     payload = {
-        "nodeId": NODE_ID,
+        "nodeId":       NODE_ID,
         "employeeName": EMPLOYEE_NAME,
         "activityType": activity_type,
-        "description": description
+        "description":  description,
+        "phoneNumber":  PHONE_NUMBER
     }
     try:
         requests.post(f"{BACKEND_URL}/api/monitoring/activity", json=payload, timeout=3)
     except Exception as e:
         print(f"⚠️  Could not report activity: {e}")
 
+
 def main():
     cap = cv2.VideoCapture(0)
     print(f"🟢 Agent started: {NODE_ID}")
-
-    distraction_counter = 0
 
     while True:
         ret, frame = cap.read()
@@ -63,35 +67,31 @@ def main():
 
         active = activity == "WORKING"
 
-        # 4. Build payload
+        # 4. Build heartbeat payload
         payload = {
-            "nodeId": NODE_ID,
-            "ipAddress": get_ip(),
-            "employeeName": EMPLOYEE_NAME,
-            "cpuUsage": stats["cpuUsage"],
-            "memoryUsage": stats["memoryUsage"],
+            "nodeId":            NODE_ID,
+            "ipAddress":         get_ip(),
+            "employeeName":      EMPLOYEE_NAME,
+            "cpuUsage":          stats["cpuUsage"],
+            "memoryUsage":       stats["memoryUsage"],
             "availableMemoryGB": stats["availableMemoryGB"],
-            "activeTasks": stats["activeTasks"],
-            "employeePresent": present,
-            "employeeActive": active,
-            "currentActivity": activity
+            "activeTasks":       stats["activeTasks"],
+            "employeePresent":   present,
+            "employeeActive":    active,
+            "currentActivity":   activity,
+            "phoneNumber":       PHONE_NUMBER
         }
 
         send_heartbeat(payload)
         print(f"📡 {NODE_ID} | CPU: {stats['cpuUsage']}% | "
               f"Present: {present} | Activity: {activity}")
 
-        # 5. Trigger alert if distracted multiple times in a row
-        if activity in ("PHONE", "SLEEPING", "AWAY"):
-            distraction_counter += 1
-            if distraction_counter >= 3:
-                send_activity_alert(activity, desc)
-                print(f"🚨 ALERT: {desc}")
-                distraction_counter = 0
-        else:
-            distraction_counter = 0
+        # 5. Send alert immediately on PHONE or SLEEPING detection
+        if activity in ("PHONE", "SLEEPING"):
+            send_activity_alert(activity, desc)
+            print(f"🚨 ALERT: {desc}")
 
-        # Optional preview window
+        # 6. Optional preview window
         cv2.putText(frame, f"{activity}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.imshow("WMS Agent", frame)
@@ -102,6 +102,7 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()

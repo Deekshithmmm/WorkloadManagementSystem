@@ -1,14 +1,15 @@
-// model/ComputerNode.java
 package com.wms.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "computer_node")
 public class ComputerNode {
 
     @Id
     private String nodeId;
+
     private String ipAddress;
     private String employeeName;
 
@@ -19,12 +20,20 @@ public class ComputerNode {
 
     private boolean employeePresent;
     private boolean employeeActive;
-    private String currentActivity;   // "WORKING", "PHONE", "SLEEPING", "AWAY"
+
+    private String currentActivity;   // WORKING, PHONE, SLEEPING, AWAY
 
     private LocalDateTime lastUpdated;
+
     private String status;            // ONLINE, OFFLINE, OVERLOADED, IDLE
 
-    // ── Getters ────────────────────────────────────────────────────
+    // ✅ REQUIRED FOR TWILIO ALERTS
+    private String phoneNumber;
+
+    // ── Default Constructor (IMPORTANT for JPA) ──
+    public ComputerNode() {}
+
+    // ── Getters ─────────────────────────────────
 
     public String getNodeId() { return nodeId; }
     public String getIpAddress() { return ipAddress; }
@@ -39,7 +48,10 @@ public class ComputerNode {
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public String getStatus() { return status; }
 
-    // ── Setters ────────────────────────────────────────────────────
+    // ✅ THIS FIXES YOUR ERROR
+    public String getPhoneNumber() { return phoneNumber; }
+
+    // ── Setters ─────────────────────────────────
 
     public void setNodeId(String nodeId) { this.nodeId = nodeId; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
@@ -53,4 +65,7 @@ public class ComputerNode {
     public void setCurrentActivity(String currentActivity) { this.currentActivity = currentActivity; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
     public void setStatus(String status) { this.status = status; }
+
+    // ✅ REQUIRED FOR SETTING PHONE NUMBER
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 }

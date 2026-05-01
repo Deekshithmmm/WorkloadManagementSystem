@@ -19,6 +19,7 @@ public class Task {
 
     private String assignedNodeId;
     private String originNodeId;
+    private String originIp;          // ← NEW
 
     private String status;
 
@@ -47,6 +48,7 @@ public class Task {
     public double getRequiredMemoryGB() { return requiredMemoryGB; }
     public String getAssignedNodeId() { return assignedNodeId; }
     public String getOriginNodeId() { return originNodeId; }
+    public String getOriginIp() { return originIp; }          // ← NEW
     public String getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
@@ -60,6 +62,7 @@ public class Task {
     public void setRequiredMemoryGB(double requiredMemoryGB) { this.requiredMemoryGB = requiredMemoryGB; }
     public void setAssignedNodeId(String assignedNodeId) { this.assignedNodeId = assignedNodeId; }
     public void setOriginNodeId(String originNodeId) { this.originNodeId = originNodeId; }
+    public void setOriginIp(String originIp) { this.originIp = originIp; }    // ← NEW
     public void setStatus(String status) { this.status = status; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }

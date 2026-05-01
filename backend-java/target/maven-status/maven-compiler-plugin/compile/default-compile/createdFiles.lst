@@ -15,6 +15,7 @@ com\wms\repository\TaskRepository.class
 com\wms\controller\NodeController.class
 com\wms\config\WebConfig$1.class
 com\wms\config\WebSocketConfig.class
+com\wms\service\SmsAlertService.class
 com\wms\controller\TestController.class
 com\wms\entity\FileEntity.class
 com\wms\service\FileService.class
